@@ -57,6 +57,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	if strings.ToLower(m.Content) == "!newtype" {
+		fmt.Println("Received newtype")
 		for _, sub := range NewtypeSubscribers {
 			sub <- 1
 		}
