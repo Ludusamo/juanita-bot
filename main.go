@@ -84,8 +84,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 func runJuanBotConvo(s *discordgo.Session, juanbotConvoChan <-chan int) {
 	juanbotStarter := []string{
-		"hi stepbro!",
-		"help stepbro... I'm stuck! :cold_sweat:",
+		"Hi stepbro!",
+		"Help stepbro... I'm stuck! :cold_sweat:",
 		":wink:",
 	}
 	insultReplies := []string{
@@ -99,7 +99,7 @@ func runJuanBotConvo(s *discordgo.Session, juanbotConvoChan <-chan int) {
 			<-juanbotConvoChan
 		}
 		randIndex := rand.Intn(len(juanbotStarter))
-		s.ChannelMessageSend(ChannelId, fmt.Sprintf("<@%s>, %s", JuanBotID, juanbotStarter[randIndex]))
+		s.ChannelMessageSend(ChannelId, fmt.Sprintf("%s, <@%s>", juanbotStarter[randIndex, JuanBotID]))
 		<-juanbotConvoChan
 		randIndex = rand.Intn(len(insultReplies))
 		s.ChannelMessageSend(ChannelId, insultReplies[randIndex])
