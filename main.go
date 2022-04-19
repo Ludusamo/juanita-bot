@@ -99,7 +99,7 @@ func runJuanBotConvo(s *discordgo.Session, juanbotConvoChan <-chan int) {
 			<-juanbotConvoChan
 		}
 		randIndex := rand.Intn(len(juanbotStarter))
-		s.ChannelMessageSend(ChannelId, fmt.Sprintf("%s, <@%s>", juanbotStarter[randIndex, JuanBotID]))
+		s.ChannelMessageSend(ChannelId, fmt.Sprintf("%s, <@%s>", juanbotStarter[randIndex], JuanBotID))
 		<-juanbotConvoChan
 		randIndex = rand.Intn(len(insultReplies))
 		s.ChannelMessageSend(ChannelId, insultReplies[randIndex])
