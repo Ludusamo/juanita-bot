@@ -20,7 +20,7 @@ var (
 	JuanBotID string
 
 	NewtypeSubscribers []chan int
-	JuanBotSubscribers []chan int
+	JuanBotSubscribers []chan string
 )
 
 func init() {
@@ -49,7 +49,7 @@ func main() {
 	NewtypeSubscribers = append(NewtypeSubscribers, newtypeChan)
 	go runNewtype(s, newtypeChan)
 
-	juanbotConvoChan := make(chan int, 1)
+	juanbotConvoChan := make(chan string, 1)
 	JuanBotSubscribers = append(JuanBotSubscribers, juanbotConvoChan)
 	go runJuanBotConvo(s, juanbotConvoChan)
 
@@ -68,9 +68,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	if m.Author.ID == JuanBotID {
-		fmt.Println("Juan Said Something")
+		fmt.Println(fmt.Sprintf("Juan Said Something in %s", m.ChannelID))
 		for _, sub := range JuanBotSubscribers {
-			sub <- 1
+			sub <- m.ChannelID
 		}
 	}
 
@@ -82,7 +82,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
-func runJuanBotConvo(s *discordgo.Session, juanbotConvoChan <-chan int) {
+func runJuanBotConvo(s *discordgo.Session, juanbotConvoChan <-chan string) {
 	juanbotStarter := []string{
 		"Hi stepbro!",
 		"Help stepbro... I'm stuck! :cold_sweat:",
@@ -94,15 +94,23 @@ func runJuanBotConvo(s *discordgo.Session, juanbotConvoChan <-chan int) {
 		":sob:",
 	}
 
+	channelCount := make(map[string]int)
+
 	for {
-		for i:= 0; i < JuanBotConvoThreshold; i++ {
-			<-juanbotConvoChan
+		channelId := <-juanbotConvoChan
+		if count, ok := channelCount[channelId]; ok {
+			channelCount[channelId] = count + 1
+		} else {
+			channelCount[channelId] = 1
 		}
-		randIndex := rand.Intn(len(juanbotStarter))
-		s.ChannelMessageSend(ChannelId, fmt.Sprintf("%s <@%s>", juanbotStarter[randIndex], JuanBotID))
-		<-juanbotConvoChan
-		randIndex = rand.Intn(len(insultReplies))
-		s.ChannelMessageSend(ChannelId, insultReplies[randIndex])
+		if channelCount[channelId] == JuanBotConvoThreshold {
+			randIndex := rand.Intn(len(juanbotStarter))
+			s.ChannelMessageSend(channelId, fmt.Sprintf("%s <@%s>", juanbotStarter[randIndex], JuanBotID))
+			<-juanbotConvoChan
+			randIndex = rand.Intn(len(insultReplies))
+			s.ChannelMessageSend(channelId, insultReplies[randIndex])
+			channelCount[channelId] = 0
+		}
 	}
 }
 func runNewtype(s *discordgo.Session, newtypeChan <-chan int) {
