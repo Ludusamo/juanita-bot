@@ -1,35 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
-	"fmt"
-	"syscall"
-	"strconv"
 	"strings"
-	"math/rand"
+	"syscall"
 
 	"github.com/bwmarrin/discordgo"
 )
-
-var (
-	Token string
-	ChannelId string
-	NewtypeThreshold int
-	JuanBotConvoThreshold int
-	JuanBotID string
-
-	NewtypeSubscribers []chan int
-	JuanBotSubscribers []chan string
-)
-
-func init() {
-	Token = os.Getenv("TOKEN")
-	ChannelId = os.Getenv("CHANNEL_ID")
-	NewtypeThreshold, _ = strconv.Atoi(os.Getenv("NEWTYPE_THRESHOLD"))
-	JuanBotConvoThreshold, _ = strconv.Atoi(os.Getenv("JUANBOT_CONVO_THRESHOLD"))
-	JuanBotID = os.Getenv("JUANBOT_ID")
-}
 
 func main() {
 	s, err := discordgo.New("Bot " + Token)
@@ -45,13 +24,17 @@ func main() {
 		return
 	}
 
-	newtypeChan := make(chan int, 1)
-	NewtypeSubscribers = append(NewtypeSubscribers, newtypeChan)
-	go runNewtype(s, newtypeChan)
+	newtypeChan := make(chan string, 1)
+	AddSub("newtype", "NewtypeInteraction", newtypeChan)
+	go RunEventCounter(s, newtypeChan, NewtypeThreshold, NewtypeInteraction)
+
+	downDetectChan := make(chan string, 1)
+	AddSub("newtype", "DownDetect", downDetectChan)
+	go RunEventCounter(s, downDetectChan, 1, ShitDownDetectorInteraction)
 
 	juanbotConvoChan := make(chan string, 1)
-	JuanBotSubscribers = append(JuanBotSubscribers, juanbotConvoChan)
-	go runJuanBotConvo(s, juanbotConvoChan)
+	AddSub("juanbot", "Convo", juanbotConvoChan)
+	go RunEventCounter(s, juanbotConvoChan, JuanBotConvoThreshold, JuanBotConvoInteraction)
 
 	fmt.Println("Bot is now running. Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
@@ -69,59 +52,19 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if m.Author.ID == JuanBotID {
 		fmt.Println(fmt.Sprintf("Juan Said Something in %s", m.ChannelID))
+		JuanBotSubLock.Lock()
 		for _, sub := range JuanBotSubscribers {
 			sub <- m.ChannelID
 		}
+		JuanBotSubLock.Unlock()
 	}
 
 	if strings.ToLower(m.Content) == "!newtype" {
-		fmt.Println("Received newtype")
+		fmt.Println(fmt.Sprintf("Received newtype in %s", m.ChannelID))
+		NewtypeSubLock.Lock()
 		for _, sub := range NewtypeSubscribers {
-			sub <- 1
+			sub <- m.ChannelID
 		}
-	}
-}
-
-func runJuanBotConvo(s *discordgo.Session, juanbotConvoChan <-chan string) {
-	juanbotStarter := []string{
-		"Hi stepbro!",
-		"Help stepbro... I'm stuck! :cold_sweat:",
-		":wink:",
-	}
-	insultReplies := []string{
-		"But... I am a bot like you... :cry:",
-		"Why are you always so mean to me! :rage:",
-		":sob:",
-	}
-
-	channelCount := make(map[string]int)
-
-	for {
-		channelId := <-juanbotConvoChan
-		if count, ok := channelCount[channelId]; ok {
-			channelCount[channelId] = count + 1
-		} else {
-			channelCount[channelId] = 1
-		}
-		if channelCount[channelId] == JuanBotConvoThreshold {
-			randIndex := rand.Intn(len(juanbotStarter))
-			s.ChannelMessageSend(channelId, fmt.Sprintf("%s <@%s>", juanbotStarter[randIndex], JuanBotID))
-			<-juanbotConvoChan
-			randIndex = rand.Intn(len(insultReplies))
-			s.ChannelMessageSend(channelId, insultReplies[randIndex])
-			channelCount[channelId] = 0
-		}
-	}
-}
-func runNewtype(s *discordgo.Session, newtypeChan <-chan int) {
-	for {
-		for i:= 0; i < NewtypeThreshold; i++ {
-			<-newtypeChan
-		}
-		_, err := s.ChannelMessageSend(ChannelId, "!newtype")
-		if err != nil {
-			fmt.Println("error sending DM message: ", err)
-			s.ChannelMessageSend(ChannelId, "Failed to send you a DM. " + "Did you disable DM in your privacy settings?")
-		}
+		NewtypeSubLock.Unlock()
 	}
 }
