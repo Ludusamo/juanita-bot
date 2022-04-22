@@ -77,7 +77,7 @@ F:
 func ShitDownDetectorInteraction(s *discordgo.Session, channelId string) {
 	juanDeadQuotes := []string{
 		"OH NO! JUAN IS DEAD :scream: :skull_crossbones:",
-		"Where were you when Juan was KILL :skull_crossbones: :sob:",
+		"Where were you when Juan was kil :skull_crossbones: :sob:",
 	}
 	receiveReply := make(chan int)
 	quit := make(chan int)
