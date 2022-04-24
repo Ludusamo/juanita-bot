@@ -39,11 +39,15 @@ func JuanBotConvoInteraction(s *discordgo.Session, channelId string) {
 		"Hi stepbro!",
 		"Help stepbro... I'm stuck! :cold_sweat:",
 		":wink:",
+		"How are you doing today?",
+		"Whatcha up to?",
 	}
 	insultReplies := []string{
 		"But... I am a bot like you... :cry:",
 		"Why are you always so mean to me! :rage:",
 		":sob:",
+		"You are such a meanie! :disappointed_relieved:",
+		"I am not puny! :rage:",
 	}
 
 	randIndex := rand.Intn(len(juanbotStarter))
