@@ -49,11 +49,6 @@ func main() {
 }
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	// Ignore own messages
-	if m.Author.ID == s.State.User.ID {
-		return
-	}
-
 	if m.Author.ID == JuanBotID {
 		fmt.Println(fmt.Sprintf("Juan Said Something in %s", m.ChannelID))
 		JuanBotSubLock.Lock()
