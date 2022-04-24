@@ -10,6 +10,20 @@ import (
 
 type InteractionCallback func(*discordgo.Session, string)
 
+func RunNewtypeTimeout(s *discordgo.Session, channelId string) {
+	receiveNewtype := make(chan int)
+	quit := make(chan int)
+	go waitForChannelSpecificReply(channelId, "newtype", receiveNewtype, quit)
+	for {
+		fmt.Println("new iteration")
+		select {
+		case <-receiveNewtype:
+		case <-time.After(time.Duration(NewtypeTimeout) * time.Second):
+			s.ChannelMessageSend(channelId, "!newtype")
+		}
+	}
+}
+
 func RunEventCounter(s *discordgo.Session, channelIdChan chan string, threshold int, cb InteractionCallback) {
 	channelCount := make(map[string]int)
 	for {
@@ -56,6 +70,8 @@ func JuanBotConvoInteraction(s *discordgo.Session, channelId string) {
 	quit := make(chan int)
 	go waitForChannelSpecificReply(channelId, "juanbot", receiveReply, quit)
 	<-receiveReply
+	quit <- 1
+
 	randIndex = rand.Intn(len(insultReplies))
 	s.ChannelMessageSend(channelId, insultReplies[randIndex])
 }
@@ -70,7 +86,6 @@ F:
 		case chanId := <-subChan:
 			if chanId == channelId {
 				receiveReply <- 1
-				break F
 			}
 		case <-quit:
 			break F
@@ -93,6 +108,6 @@ func ShitDownDetectorInteraction(s *discordgo.Session, channelId string) {
 	case <-time.After(2 * time.Second):
 		randIndex := rand.Intn(len(juanDeadQuotes))
 		s.ChannelMessageSend(channelId, juanDeadQuotes[randIndex])
-		quit <- 1
 	}
+	quit <- 1
 }

@@ -36,6 +36,10 @@ func main() {
 	AddSub("juanbot", "Convo", juanbotConvoChan)
 	go RunEventCounter(s, juanbotConvoChan, JuanBotConvoThreshold, JuanBotConvoInteraction)
 
+	for _, c := range ChannelIDs {
+		go RunNewtypeTimeout(s, c)
+	}
+
 	fmt.Println("Bot is now running. Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
