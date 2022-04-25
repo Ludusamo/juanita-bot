@@ -1,39 +1,47 @@
 package main
 
-import "sync"
+import (
+	"sync"
+)
+
+type SubscriptionMap map[string]chan string
+type SubscriptionType int
+
+const (
+	JuanSubType SubscriptionType = iota
+	NewtypeSubType
+)
 
 var (
-	NewtypeSubLock     sync.Mutex
-	NewtypeSubscribers map[string]chan string
-	JuanBotSubLock     sync.Mutex
-	JuanBotSubscribers map[string]chan string
+	SubscriptionLocks map[SubscriptionType]*sync.Mutex
+	Subscriptions     map[SubscriptionType]SubscriptionMap
 )
 
 func init() {
-	NewtypeSubscribers = make(map[string]chan string)
-	JuanBotSubscribers = make(map[string]chan string)
+	SubscriptionLocks = make(map[SubscriptionType]*sync.Mutex)
+	Subscriptions = make(map[SubscriptionType]SubscriptionMap)
 }
 
-func AddSub(subType string, subName string, channel chan string) {
-	if subType == "newtype" {
-		NewtypeSubLock.Lock()
-		NewtypeSubscribers[subName] = channel
-		NewtypeSubLock.Unlock()
-	} else if subType == "juanbot" {
-		JuanBotSubLock.Lock()
-		JuanBotSubscribers[subName] = channel
-		JuanBotSubLock.Unlock()
+func AddSub(subType SubscriptionType, subName string, channel chan string) {
+	lock, exists := SubscriptionLocks[subType]
+	if !exists {
+		lock = &sync.Mutex{}
+		SubscriptionLocks[subType] = lock
+		Subscriptions[subType] = make(SubscriptionMap)
 	}
+	lock.Lock()
+	defer lock.Unlock()
+	Subscriptions[subType][subName] = channel
 }
 
-func RemoveSub(subType string, subName string) {
-	if subType == "newtype" {
-		NewtypeSubLock.Lock()
-		delete(NewtypeSubscribers, subName)
-		NewtypeSubLock.Unlock()
-	} else if subType == "juanbot" {
-		JuanBotSubLock.Lock()
-		delete(JuanBotSubscribers, subName)
-		JuanBotSubLock.Unlock()
+func RemoveSub(subType SubscriptionType, subName string) {
+	lock, exists := SubscriptionLocks[subType]
+	if !exists {
+		lock = &sync.Mutex{}
+		SubscriptionLocks[subType] = lock
+		Subscriptions[subType] = make(SubscriptionMap)
 	}
+	lock.Lock()
+	defer lock.Unlock()
+	delete(Subscriptions[subType], subName)
 }

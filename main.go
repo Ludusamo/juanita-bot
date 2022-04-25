@@ -25,15 +25,15 @@ func main() {
 	}
 
 	newtypeChan := make(chan string, 1)
-	AddSub("newtype", "NewtypeInteraction", newtypeChan)
+	AddSub(NewtypeSubType, "NewtypeInteraction", newtypeChan)
 	go RunEventCounter(s, newtypeChan, NewtypeThreshold, NewtypeInteraction)
 
 	downDetectChan := make(chan string, 1)
-	AddSub("newtype", "DownDetect", downDetectChan)
+	AddSub(NewtypeSubType, "DownDetect", downDetectChan)
 	go RunEventCounter(s, downDetectChan, 1, ShitDownDetectorInteraction)
 
 	juanbotConvoChan := make(chan string, 1)
-	AddSub("juanbot", "Convo", juanbotConvoChan)
+	AddSub(JuanSubType, "Convo", juanbotConvoChan)
 	go RunEventCounter(s, juanbotConvoChan, JuanBotConvoThreshold, JuanBotConvoInteraction)
 
 	for _, c := range ChannelIDs {
@@ -51,19 +51,19 @@ func main() {
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == JuanBotID {
 		fmt.Println(fmt.Sprintf("Juan Said Something in %s", m.ChannelID))
-		JuanBotSubLock.Lock()
-		for _, sub := range JuanBotSubscribers {
+		SubscriptionLocks[JuanSubType].Lock()
+		for _, sub := range Subscriptions[JuanSubType] {
 			sub <- m.ChannelID
 		}
-		JuanBotSubLock.Unlock()
+		SubscriptionLocks[JuanSubType].Unlock()
 	}
 
 	if strings.ToLower(m.Content) == "!newtype" {
 		fmt.Println(fmt.Sprintf("Received newtype in %s", m.ChannelID))
-		NewtypeSubLock.Lock()
-		for _, sub := range NewtypeSubscribers {
+		SubscriptionLocks[NewtypeSubType].Lock()
+		for _, sub := range Subscriptions[NewtypeSubType] {
 			sub <- m.ChannelID
 		}
-		NewtypeSubLock.Unlock()
+		SubscriptionLocks[NewtypeSubType].Unlock()
 	}
 }

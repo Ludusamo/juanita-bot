@@ -11,7 +11,7 @@ import (
 type InteractionCallback func(*discordgo.Session, string)
 
 func RunNewtypeTimeout(s *discordgo.Session, channelId string) {
-	receiveNewtype, _ := waitForChannelSpecificReply(channelId, "newtype")
+	receiveNewtype, _ := waitForChannelSpecificReply(channelId, NewtypeSubType)
 	for {
 		select {
 		case <-receiveNewtype:
@@ -63,7 +63,7 @@ func JuanBotConvoInteraction(s *discordgo.Session, channelId string) {
 
 	randIndex := rand.Intn(len(juanbotStarter))
 	s.ChannelMessageSend(channelId, fmt.Sprintf("%s <@%s>", juanbotStarter[randIndex], JuanBotID))
-	receiveReply, quit := waitForChannelSpecificReply(channelId, "juanbot")
+	receiveReply, quit := waitForChannelSpecificReply(channelId, JuanSubType)
 	<-receiveReply
 	quit <- 1
 
@@ -71,7 +71,7 @@ func JuanBotConvoInteraction(s *discordgo.Session, channelId string) {
 	s.ChannelMessageSend(channelId, insultReplies[randIndex])
 }
 
-func waitForChannelSpecificReply(channelId string, subType string) (<-chan int, chan<- int) {
+func waitForChannelSpecificReply(channelId string, subType SubscriptionType) (<-chan int, chan<- int) {
 	receiveReply := make(chan int)
 	quit := make(chan int)
 	subChan := make(chan string, 1)
@@ -94,12 +94,11 @@ func waitForChannelSpecificReply(channelId string, subType string) (<-chan int, 
 }
 
 func ShitDownDetectorInteraction(s *discordgo.Session, channelId string) {
-	fmt.Println("Starting shit down detector")
 	juanDeadQuotes := []string{
 		"OH NO! JUAN IS DEAD :scream: :skull_crossbones:",
 		"Where were you when Juan was kil :skull_crossbones: :sob:",
 	}
-	receiveReply, quit := waitForChannelSpecificReply(channelId, "juanbot")
+	receiveReply, quit := waitForChannelSpecificReply(channelId, JuanSubType)
 
 	select {
 	case <-receiveReply:
