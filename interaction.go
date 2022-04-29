@@ -102,7 +102,7 @@ func ShitDownDetectorInteraction(s *discordgo.Session, channelId string) {
 
 	select {
 	case <-receiveReply:
-	case <-time.After(2 * time.Second):
+	case <-time.After(time.Duration(JuanDeadTimeout) * time.Second):
 		randIndex := rand.Intn(len(juanDeadQuotes))
 		s.ChannelMessageSend(channelId, juanDeadQuotes[randIndex])
 	}

@@ -25,7 +25,7 @@ func main() {
 	}
 
 	newtypeChan := make(chan string, 1)
-	AddSub(NewtypeSubType, "NewtypeInteraction", newtypeChan)
+	AddSub(JuanNewtypeSubType, "NewtypeInteraction", newtypeChan)
 	go RunEventCounter(s, newtypeChan, NewtypeThreshold, NewtypeInteraction)
 
 	downDetectChan := make(chan string, 1)
@@ -56,6 +56,15 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			sub <- m.ChannelID
 		}
 		SubscriptionLocks[JuanSubType].Unlock()
+
+		if strings.HasPrefix(m.Content, "Bryant the type of guy to") {
+			fmt.Println(fmt.Sprintf("Juan Said a Newtype in %s", m.ChannelID))
+			SubscriptionLocks[JuanNewtypeSubType].Lock()
+			for _, sub := range Subscriptions[JuanNewtypeSubType] {
+				sub <- m.ChannelID
+			}
+			SubscriptionLocks[JuanNewtypeSubType].Unlock()
+		}
 	}
 
 	if strings.ToLower(m.Content) == "!newtype" {

@@ -10,6 +10,7 @@ type SubscriptionType int
 const (
 	JuanSubType SubscriptionType = iota
 	NewtypeSubType
+	JuanNewtypeSubType
 )
 
 var (
