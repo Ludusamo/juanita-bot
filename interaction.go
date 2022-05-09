@@ -21,10 +21,11 @@ func RunNewtypeTimeout(s *discordgo.Session, channelId string) {
 	}
 }
 
-func RunEventCounter(s *discordgo.Session, channelIdChan chan string, threshold int, cb InteractionCallback) {
+func RunEventCounter(s *discordgo.Session, channelIdChan chan *discordgo.MessageCreate, threshold int, cb InteractionCallback) {
 	channelCount := make(map[string]int)
 	for {
-		channelId := <-channelIdChan
+		message := <-channelIdChan
+		channelId := message.ChannelID
 		if count, ok := channelCount[channelId]; ok {
 			channelCount[channelId] = count + 1
 		} else {
@@ -74,15 +75,15 @@ func JuanBotConvoInteraction(s *discordgo.Session, channelId string) {
 func waitForChannelSpecificReply(channelId string, subType SubscriptionType) (<-chan int, chan<- int) {
 	receiveReply := make(chan int)
 	quit := make(chan int)
-	subChan := make(chan string, 1)
+	subChan := make(chan *discordgo.MessageCreate, 1)
 
 	go func() {
 		AddSub(subType, fmt.Sprintf("Down-%s", channelId), subChan)
 		defer RemoveSub(subType, fmt.Sprintf("Down-%s", channelId))
 		for {
 			select {
-			case chanId := <-subChan:
-				if chanId == channelId {
+			case message := <-subChan:
+				if message.ChannelID == channelId {
 					receiveReply <- 1
 				}
 			case <-quit:

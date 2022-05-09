@@ -2,9 +2,11 @@ package main
 
 import (
 	"sync"
+
+	"github.com/bwmarrin/discordgo"
 )
 
-type SubscriptionMap map[string]chan string
+type SubscriptionMap map[string]chan *discordgo.MessageCreate
 type SubscriptionType int
 
 const (
@@ -23,7 +25,7 @@ func init() {
 	Subscriptions = make(map[SubscriptionType]SubscriptionMap)
 }
 
-func AddSub(subType SubscriptionType, subName string, channel chan string) {
+func AddSub(subType SubscriptionType, subName string, channel chan *discordgo.MessageCreate) {
 	lock, exists := SubscriptionLocks[subType]
 	if !exists {
 		lock = &sync.Mutex{}
