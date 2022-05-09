@@ -3,12 +3,48 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
 
 type InteractionCallback func(*discordgo.Session, string)
+
+type MatchRule struct {
+	ContentMatch string
+	Responses    []string
+}
+
+var replyMap = []MatchRule{
+	{
+		"You are undesirable puny human!",
+		[]string{
+			"But... I am a bot like you... :cry:",
+			"Why are you always so mean to me! :rage:",
+			":sob:",
+			"You are such a meanie! :disappointed_relieved:",
+			"I am not puny! :rage:",
+		},
+	},
+	{
+		"I'm done hoe-ing around",
+		[]string{
+			"Really?! :heart_eyes:",
+			"Oh... what did you have in mind? :smirk:",
+			":eyes:",
+			"Finally! I have been waiting for so long :weary:",
+		},
+	},
+	{
+		"",
+		[]string{
+			":flushed:",
+			":neutral_face:",
+			":robot:",
+		},
+	},
+}
 
 func RunNewtypeTimeout(s *discordgo.Session, channelId string) {
 	receiveNewtype, _ := waitForChannelSpecificReply(channelId, NewtypeSubType)
@@ -53,27 +89,28 @@ func JuanBotConvoInteraction(s *discordgo.Session, channelId string) {
 		":wink:",
 		"How are you doing today?",
 		"Whatcha up to?",
-	}
-	insultReplies := []string{
-		"But... I am a bot like you... :cry:",
-		"Why are you always so mean to me! :rage:",
-		":sob:",
-		"You are such a meanie! :disappointed_relieved:",
-		"I am not puny! :rage:",
+		"Hi cutie! :kissing_heart:",
+		"I miss you... :pleading_face:",
 	}
 
 	randIndex := rand.Intn(len(juanbotStarter))
 	s.ChannelMessageSend(channelId, fmt.Sprintf("%s <@%s>", juanbotStarter[randIndex], JuanBotID))
 	receiveReply, quit := waitForChannelSpecificReply(channelId, JuanSubType)
-	<-receiveReply
+	message := <-receiveReply
 	quit <- 1
 
-	randIndex = rand.Intn(len(insultReplies))
-	s.ChannelMessageSend(channelId, insultReplies[randIndex])
+	for _, matchRule := range replyMap {
+		if strings.Contains(message.Content, matchRule.ContentMatch) {
+			randIndex = rand.Intn(len(matchRule.Responses))
+			s.ChannelMessageSend(channelId, matchRule.Responses[randIndex])
+			break
+		}
+	}
+
 }
 
-func waitForChannelSpecificReply(channelId string, subType SubscriptionType) (<-chan int, chan<- int) {
-	receiveReply := make(chan int)
+func waitForChannelSpecificReply(channelId string, subType SubscriptionType) (<-chan *discordgo.MessageCreate, chan<- int) {
+	receiveReply := make(chan *discordgo.MessageCreate)
 	quit := make(chan int)
 	subChan := make(chan *discordgo.MessageCreate, 1)
 
@@ -84,7 +121,7 @@ func waitForChannelSpecificReply(channelId string, subType SubscriptionType) (<-
 			select {
 			case message := <-subChan:
 				if message.ChannelID == channelId {
-					receiveReply <- 1
+					receiveReply <- message
 				}
 			case <-quit:
 				return
