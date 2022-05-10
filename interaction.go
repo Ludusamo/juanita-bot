@@ -28,7 +28,7 @@ var replyMap = []MatchRule{
 		},
 	},
 	{
-		"I'm done hoe-ing around",
+		"get to know each other",
 		[]string{
 			"Really?! :heart_eyes:",
 			"Oh... what did you have in mind? :smirk:",
