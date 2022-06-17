@@ -13,6 +13,7 @@ const (
 	JuanSubType SubscriptionType = iota
 	NewtypeSubType
 	JuanNewtypeSubType
+	BryantSubType
 )
 
 var (
@@ -25,26 +26,35 @@ func init() {
 	Subscriptions = make(map[SubscriptionType]SubscriptionMap)
 }
 
-func AddSub(subType SubscriptionType, subName string, channel chan *discordgo.MessageCreate) {
+func getLock(subType SubscriptionType) *sync.Mutex {
 	lock, exists := SubscriptionLocks[subType]
 	if !exists {
 		lock = &sync.Mutex{}
 		SubscriptionLocks[subType] = lock
 		Subscriptions[subType] = make(SubscriptionMap)
 	}
+	return lock
+}
+
+func AddSub(subType SubscriptionType, subName string, channel chan *discordgo.MessageCreate) {
+	lock := getLock(subType)
 	lock.Lock()
 	defer lock.Unlock()
 	Subscriptions[subType][subName] = channel
 }
 
 func RemoveSub(subType SubscriptionType, subName string) {
-	lock, exists := SubscriptionLocks[subType]
-	if !exists {
-		lock = &sync.Mutex{}
-		SubscriptionLocks[subType] = lock
-		Subscriptions[subType] = make(SubscriptionMap)
-	}
+	lock := getLock(subType)
 	lock.Lock()
 	defer lock.Unlock()
 	delete(Subscriptions[subType], subName)
+}
+
+func Notify(subType SubscriptionType, msg *discordgo.MessageCreate) {
+	lock := getLock(subType)
+	lock.Lock()
+	defer lock.Unlock()
+	for _, sub := range Subscriptions[subType] {
+		sub <- msg
+	}
 }

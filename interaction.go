@@ -57,6 +57,24 @@ func RunNewtypeTimeout(s *discordgo.Session, channelId string) {
 	}
 }
 
+func RunYoWord(s *discordgo.Session, channelId string) {
+	for {
+		receiveNewtype, _ := waitForChannelSpecificReply(channelId, NewtypeSubType)
+		<-receiveNewtype // wait for newtype
+
+		// See if Bryant responds within timeout
+		bryantChatChan, _ := waitForChannelSpecificReply(channelId, BryantSubType)
+		select {
+		case msg := <-bryantChatChan:
+			s.ChannelMessageSendComplex(channelId, &discordgo.MessageSend{
+				Content:   "yo word",
+				Reference: msg.Reference(),
+			})
+		case <-time.After(time.Duration(YoWordTimeout) * time.Second):
+		}
+	}
+}
+
 func RunEventCounter(s *discordgo.Session, channelIdChan chan *discordgo.MessageCreate, threshold int, cb InteractionCallback) {
 	channelCount := make(map[string]int)
 	for {

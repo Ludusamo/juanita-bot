@@ -40,6 +40,10 @@ func main() {
 		go RunNewtypeTimeout(s, c)
 	}
 
+	for _, c := range ChannelIDs {
+		go RunYoWord(s, c)
+	}
+
 	fmt.Println("Bot is now running. Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
@@ -51,28 +55,21 @@ func main() {
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == JuanBotID {
 		fmt.Println(fmt.Sprintf("Juan Said Something in %s", m.ChannelID))
-		SubscriptionLocks[JuanSubType].Lock()
-		for _, sub := range Subscriptions[JuanSubType] {
-			sub <- m
-		}
-		SubscriptionLocks[JuanSubType].Unlock()
+		Notify(JuanSubType, m)
 
 		if strings.HasPrefix(m.Content, "Bryant the type of guy to") {
 			fmt.Println(fmt.Sprintf("Juan Said a Newtype in %s", m.ChannelID))
-			SubscriptionLocks[JuanNewtypeSubType].Lock()
-			for _, sub := range Subscriptions[JuanNewtypeSubType] {
-				sub <- m
-			}
-			SubscriptionLocks[JuanNewtypeSubType].Unlock()
+			Notify(JuanNewtypeSubType, m)
 		}
+	}
+
+	if m.Author.ID == BryantID {
+		fmt.Println(fmt.Sprintf("Bryant Said Something in %s", m.ChannelID))
+		Notify(BryantSubType, m)
 	}
 
 	if strings.ToLower(m.Content) == "!newtype" {
 		fmt.Println(fmt.Sprintf("Received newtype in %s", m.ChannelID))
-		SubscriptionLocks[NewtypeSubType].Lock()
-		for _, sub := range Subscriptions[NewtypeSubType] {
-			sub <- m
-		}
-		SubscriptionLocks[NewtypeSubType].Unlock()
+		Notify(NewtypeSubType, m)
 	}
 }

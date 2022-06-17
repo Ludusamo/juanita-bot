@@ -14,6 +14,8 @@ var (
 	ChannelIDs            []string
 	NewtypeTimeout        int
 	JuanDeadTimeout       int
+	BryantID              string
+	YoWordTimeout         int
 )
 
 func init() {
@@ -24,4 +26,6 @@ func init() {
 	ChannelIDs = strings.Split(os.Getenv("CHANNEL_IDS"), ",")
 	NewtypeTimeout, _ = strconv.Atoi(os.Getenv("NEWTYPE_TIMEOUT"))
 	JuanDeadTimeout, _ = strconv.Atoi(os.Getenv("JUAN_DEAD_TIMEOUT"))
+	BryantID = os.Getenv("BRYANT_ID")
+	YoWordTimeout, _ = strconv.Atoi(os.Getenv("YO_WORD_TIMEOUT"))
 }
