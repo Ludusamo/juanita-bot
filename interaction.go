@@ -46,6 +46,10 @@ var replyMap = []MatchRule{
 	},
 }
 
+var yoWordIgnores = map[string]int{
+	"!newtype": 1,
+}
+
 func RunNewtypeTimeout(s *discordgo.Session, channelId string) {
 	receiveNewtype, _ := waitForChannelSpecificReply(channelId, NewtypeSubType)
 	for {
@@ -66,10 +70,12 @@ func RunYoWord(s *discordgo.Session, channelId string) {
 		bryantChatChan, _ := waitForChannelSpecificReply(channelId, BryantSubType)
 		select {
 		case msg := <-bryantChatChan:
-			s.ChannelMessageSendComplex(channelId, &discordgo.MessageSend{
-				Content:   "yo word",
-				Reference: msg.Reference(),
-			})
+			if _, ok := yoWordIgnores[strings.ToLower(msg.Content)]; !ok {
+				s.ChannelMessageSendComplex(channelId, &discordgo.MessageSend{
+					Content:   "yo word",
+					Reference: msg.Reference(),
+				})
+			}
 		case <-time.After(time.Duration(YoWordTimeout) * time.Second):
 		}
 	}
