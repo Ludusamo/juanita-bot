@@ -51,7 +51,7 @@ var yoWordIgnores = map[string]int{
 }
 
 func RunNewtypeTimeout(s *discordgo.Session, channelId string) {
-	receiveNewtype, _ := waitForChannelSpecificReply(channelId, NewtypeSubType)
+	receiveNewtype, _ := waitForChannelSpecificReply(channelId, NewtypeSubType, "RunNewtype")
 	for {
 		select {
 		case <-receiveNewtype:
@@ -63,11 +63,11 @@ func RunNewtypeTimeout(s *discordgo.Session, channelId string) {
 
 func RunYoWord(s *discordgo.Session, channelId string) {
 	for {
-		receiveNewtype, _ := waitForChannelSpecificReply(channelId, NewtypeSubType)
+		receiveNewtype, _ := waitForChannelSpecificReply(channelId, NewtypeSubType, "YoWordNewtype")
 		<-receiveNewtype // wait for newtype
 
 		// See if Bryant responds within timeout
-		bryantChatChan, _ := waitForChannelSpecificReply(channelId, BryantSubType)
+		bryantChatChan, _ := waitForChannelSpecificReply(channelId, BryantSubType, "YoWordBryant")
 		select {
 		case msg := <-bryantChatChan:
 			if _, ok := yoWordIgnores[strings.ToLower(msg.Content)]; !ok {
@@ -119,7 +119,7 @@ func JuanBotConvoInteraction(s *discordgo.Session, channelId string) {
 
 	randIndex := rand.Intn(len(juanbotStarter))
 	s.ChannelMessageSend(channelId, fmt.Sprintf("%s <@%s>", juanbotStarter[randIndex], JuanBotID))
-	receiveReply, quit := waitForChannelSpecificReply(channelId, JuanSubType)
+	receiveReply, quit := waitForChannelSpecificReply(channelId, JuanSubType, "JuanBotConvo")
 	message := <-receiveReply
 	quit <- 1
 
@@ -133,14 +133,14 @@ func JuanBotConvoInteraction(s *discordgo.Session, channelId string) {
 
 }
 
-func waitForChannelSpecificReply(channelId string, subType SubscriptionType) (<-chan *discordgo.MessageCreate, chan<- int) {
+func waitForChannelSpecificReply(channelId string, subType SubscriptionType, subNamePrefix string) (<-chan *discordgo.MessageCreate, chan<- int) {
 	receiveReply := make(chan *discordgo.MessageCreate)
 	quit := make(chan int)
 	subChan := make(chan *discordgo.MessageCreate, 1)
 
 	go func() {
-		AddSub(subType, fmt.Sprintf("Down-%s", channelId), subChan)
-		defer RemoveSub(subType, fmt.Sprintf("Down-%s", channelId))
+		AddSub(subType, fmt.Sprintf("%s-%s", subNamePrefix, channelId), subChan)
+		defer RemoveSub(subType, fmt.Sprintf("%s-%s", subNamePrefix, channelId))
 		for {
 			select {
 			case message := <-subChan:
@@ -160,7 +160,7 @@ func ShitDownDetectorInteraction(s *discordgo.Session, channelId string) {
 		"OH NO! JUAN IS DEAD :scream: :skull_crossbones:",
 		"Where were you when Juan was kil :skull_crossbones: :sob:",
 	}
-	receiveReply, quit := waitForChannelSpecificReply(channelId, JuanSubType)
+	receiveReply, quit := waitForChannelSpecificReply(channelId, JuanSubType, "ShitDownDetector")
 
 	select {
 	case <-receiveReply:

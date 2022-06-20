@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"sync"
 
 	"github.com/bwmarrin/discordgo"
@@ -54,7 +55,8 @@ func Notify(subType SubscriptionType, msg *discordgo.MessageCreate) {
 	lock := getLock(subType)
 	lock.Lock()
 	defer lock.Unlock()
-	for _, sub := range Subscriptions[subType] {
+	for subName, sub := range Subscriptions[subType] {
+		log.Println("Notifying:", subName)
 		sub <- msg
 	}
 }
