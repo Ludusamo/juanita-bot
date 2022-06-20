@@ -29,20 +29,14 @@ func main() {
 	AddSub(JuanNewtypeSubType, "Newtype", newtypeChan)
 	go RunEventCounter(s, newtypeChan, NewtypeThreshold, NewtypeInteraction)
 
-	downDetectChan := make(chan *discordgo.MessageCreate, 1)
-	AddSub(NewtypeSubType, "DownDetectStart", downDetectChan)
-	go RunEventCounter(s, downDetectChan, 1, ShitDownDetectorInteraction)
-
 	juanbotConvoChan := make(chan *discordgo.MessageCreate, 1)
 	AddSub(JuanSubType, "JuanBotConvo", juanbotConvoChan)
 	go RunEventCounter(s, juanbotConvoChan, JuanBotConvoThreshold, JuanBotConvoInteraction)
 
 	for _, c := range ChannelIDs {
 		go RunNewtypeTimeout(s, c)
-	}
-
-	for _, c := range ChannelIDs {
 		go RunYoWord(s, c)
+		go ShitDownDetectorInteraction(s, c)
 	}
 
 	log.Println("Bot is now running. Press CTRL-C to exit.")

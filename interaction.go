@@ -62,22 +62,25 @@ func RunNewtypeTimeout(s *discordgo.Session, channelId string) {
 }
 
 func RunYoWord(s *discordgo.Session, channelId string) {
+	receiveNewtype, _ := waitForChannelSpecificReply(channelId, JuanNewtypeSubType, "YoWordNewtype")
 	for {
-		receiveNewtype, _ := waitForChannelSpecificReply(channelId, NewtypeSubType, "YoWordNewtype")
 		<-receiveNewtype // wait for newtype
 
-		// See if Bryant responds within timeout
-		bryantChatChan, _ := waitForChannelSpecificReply(channelId, BryantSubType, "YoWordBryant")
-		select {
-		case msg := <-bryantChatChan:
-			if _, ok := yoWordIgnores[strings.ToLower(msg.Content)]; !ok {
-				s.ChannelMessageSendComplex(channelId, &discordgo.MessageSend{
-					Content:   "yo word",
-					Reference: msg.Reference(),
-				})
+		go func() {
+			bryantChatChan, quit := waitForChannelSpecificReply(channelId, BryantSubType, "YoWordBryant")
+			// See if Bryant responds within timeout
+			select {
+			case msg := <-bryantChatChan:
+				if _, ok := yoWordIgnores[strings.ToLower(msg.Content)]; !ok {
+					s.ChannelMessageSendComplex(channelId, &discordgo.MessageSend{
+						Content:   "yo word",
+						Reference: msg.Reference(),
+					})
+				}
+			case <-time.After(time.Duration(YoWordTimeout) * time.Second):
 			}
-		case <-time.After(time.Duration(YoWordTimeout) * time.Second):
-		}
+			quit <- 1
+		}()
 	}
 }
 
@@ -160,13 +163,19 @@ func ShitDownDetectorInteraction(s *discordgo.Session, channelId string) {
 		"OH NO! JUAN IS DEAD :scream: :skull_crossbones:",
 		"Where were you when Juan was kil :skull_crossbones: :sob:",
 	}
-	receiveReply, quit := waitForChannelSpecificReply(channelId, JuanSubType, "ShitDownDetector")
+	receiveNewtype, _ := waitForChannelSpecificReply(channelId, NewtypeSubType, "ShitDownDetectorNewtype")
+	for {
+		<-receiveNewtype
+		go func() {
+			receiveReply, quit := waitForChannelSpecificReply(channelId, JuanSubType, "ShitDownDetectorReply")
 
-	select {
-	case <-receiveReply:
-	case <-time.After(time.Duration(JuanDeadTimeout) * time.Second):
-		randIndex := rand.Intn(len(juanDeadQuotes))
-		s.ChannelMessageSend(channelId, juanDeadQuotes[randIndex])
+			select {
+			case <-receiveReply:
+			case <-time.After(time.Duration(JuanDeadTimeout) * time.Second):
+				randIndex := rand.Intn(len(juanDeadQuotes))
+				s.ChannelMessageSend(channelId, juanDeadQuotes[randIndex])
+			}
+			quit <- 1
+		}()
 	}
-	quit <- 1
 }
