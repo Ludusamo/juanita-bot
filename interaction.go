@@ -121,8 +121,8 @@ func JuanBotConvoInteraction(s *discordgo.Session, channelId string) {
 	}
 
 	randIndex := rand.Intn(len(juanbotStarter))
-	s.ChannelMessageSend(channelId, fmt.Sprintf("%s <@%s>", juanbotStarter[randIndex], JuanBotID))
 	receiveReply, quit := waitForChannelSpecificReply(channelId, JuanSubType, "JuanBotConvo")
+	s.ChannelMessageSend(channelId, fmt.Sprintf("%s <@%s>", juanbotStarter[randIndex], JuanBotID))
 	message := <-receiveReply
 	quit <- 1
 
