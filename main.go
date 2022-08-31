@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/binary"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/signal"
@@ -18,6 +20,7 @@ func main() {
 		return
 	}
 	s.AddHandler(messageCreate)
+	s.AddHandler(voiceStateUpdate)
 
 	err = s.Open()
 	if err != nil {
@@ -66,5 +69,67 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if strings.ToLower(m.Content) == "!newtype" {
 		log.Println(fmt.Sprintf("Received newtype in %s", m.ChannelID))
 		Notify(NewtypeSubType, m)
+	}
+}
+
+func loadSound() (buf [][]byte, err error) {
+	file, err := os.Open("eric.dca")
+	if err != nil {
+		fmt.Println("Error opening dca file :", err)
+		return nil, err
+	}
+
+	var opuslen int16
+
+	buffer := make([][]byte, 0)
+	for {
+		// Read opus frame length from dca file.
+		err = binary.Read(file, binary.LittleEndian, &opuslen)
+
+		// If this is the end of the file, just return.
+		if err == io.EOF || err == io.ErrUnexpectedEOF {
+			err := file.Close()
+			if err != nil {
+				return nil, err
+			}
+			return buffer, nil
+		}
+
+		if err != nil {
+			fmt.Println("Error reading from dca file :", err)
+			return nil, err
+		}
+
+		// Read encoded pcm from dca file.
+		InBuf := make([]byte, opuslen)
+		err = binary.Read(file, binary.LittleEndian, &InBuf)
+
+		// Should not be any end of file errors
+		if err != nil {
+			fmt.Println("Error reading from dca file :", err)
+			return nil, err
+		}
+
+		// Append encoded pcm data to the buffer.
+		buffer = append(buffer, InBuf)
+	}
+}
+
+func voiceStateUpdate(s *discordgo.Session, v *discordgo.VoiceStateUpdate) {
+	if v.UserID == EricID && v.ChannelID != "" {
+		log.Println(fmt.Sprintf("Eric joined channel %s", v.ChannelID))
+		vc, err := s.ChannelVoiceJoin(v.GuildID, v.ChannelID, false, false)
+		if err != nil {
+			fmt.Println(err)
+		}
+		buffer, load_err := loadSound()
+		vc.Speaking(true)
+		if load_err == nil {
+			for _, buff := range buffer {
+				vc.OpusSend <- buff
+			}
+		}
+		vc.Speaking(false)
+		vc.Disconnect()
 	}
 }

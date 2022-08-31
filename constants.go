@@ -16,6 +16,7 @@ var (
 	JuanDeadTimeout       int
 	BryantID              string
 	YoWordTimeout         int
+	EricID                string
 )
 
 func init() {
@@ -28,4 +29,5 @@ func init() {
 	JuanDeadTimeout, _ = strconv.Atoi(os.Getenv("JUAN_DEAD_TIMEOUT"))
 	BryantID = os.Getenv("BRYANT_ID")
 	YoWordTimeout, _ = strconv.Atoi(os.Getenv("YO_WORD_TIMEOUT"))
+	EricID = os.Getenv("ERIC_ID")
 }

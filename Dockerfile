@@ -7,6 +7,7 @@ COPY go.sum ./
 RUN go mod download
 
 COPY *.go ./
+COPY *.dca ./
 
 RUN go build -o /juanita
 
