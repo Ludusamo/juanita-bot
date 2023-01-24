@@ -37,6 +37,12 @@ var replyMap = []MatchRule{
 		},
 	},
 	{
+		"Roses are red, Poppys are too",
+		[]string{
+			"I see you're trying to make a connection by sharing the same name, but let's work on making a deeper one. :smirk:",
+		},
+	},
+	{
 		"",
 		[]string{
 			":flushed:",
