@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -42,6 +43,8 @@ func main() {
 		go ShitDownDetectorInteraction(s, c)
 	}
 
+	go waitUntilEricBday(s)
+
 	log.Println("Bot is now running. Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
@@ -69,6 +72,33 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if strings.ToLower(m.Content) == "!newtype" {
 		log.Println(fmt.Sprintf("Received newtype in %s", m.ChannelID))
 		Notify(NewtypeSubType, m)
+	}
+}
+
+func ericThisYearBday() time.Time {
+	loc, _ := time.LoadLocation("America/New_York")
+	return time.Date(time.Now().Year(), 5, 28, 0, 10, 0, 0, loc)
+}
+
+func waitUntilEricBday(s *discordgo.Session) {
+	ericBday := ericThisYearBday()
+	if time.Now().After(ericBday) {
+		ericBday = ericThisYearBday().AddDate(1, 0, 0)
+	}
+	log.Println(fmt.Sprintf("Eric's Next Birthday is %s", ericBday))
+	for {
+		if time.Now().Before(ericBday) {
+			timeUntilEricsBday := time.Until(ericBday)
+	log.Println(fmt.Sprintf("Time until Erics Bday %s", timeUntilEricsBday))
+			time.Sleep(timeUntilEricsBday / 2)
+		} else {
+			for _, c := range ChannelIDs {
+				s.ChannelMessageSend(c,
+					fmt.Sprintf("Happy birthday <@%s>! :partying_face: Thanks for creating my big bro <@%s>! :kissing_heart:", EricID, JuanBotID))
+			}
+			ericBday = ericThisYearBday().AddDate(1, 0, 0)
+			log.Println(fmt.Sprintf("Eric's Next Birthday is %s", ericBday))
+		}
 	}
 }
 
