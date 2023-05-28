@@ -77,7 +77,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 func ericThisYearBday() time.Time {
 	loc, _ := time.LoadLocation("America/New_York")
-	return time.Date(time.Now().Year(), 5, 28, 0, 10, 0, 0, loc)
+	return time.Date(time.Now().Year(), 5, 28, 0, 0, 0, 0, loc)
 }
 
 func waitUntilEricBday(s *discordgo.Session) {
