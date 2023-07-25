@@ -21,7 +21,6 @@ func main() {
 		return
 	}
 	s.AddHandler(messageCreate)
-	s.AddHandler(voiceStateUpdate)
 
 	err = s.Open()
 	if err != nil {
